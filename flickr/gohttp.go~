@@ -9,26 +9,26 @@ import (
     )
 
 type Details struct{
-	id string	`json:"id"`
-	owner string	`json:"owner"`
-	secret string	`json:"secret"`
-	server string	`json:"server"`
-	farm int	`json:"farm"`
-	title string 	`json:"title"`
-	ispublic int	`json:"ispublic"`
-	isfriend int	`json:"isfriend"`
-	isfamily int	`json:"isfamily"`
+	Id string	`json:"id"`
+	Owner string	`json:"owner"`
+	Secret string	`json:"secret"`
+	Server string	`json:"server"`
+	Farm int	`json:"farm"`
+	Title string 	`json:"title"`
+	Ispublic int	`json:"ispublic"`
+	Isfriend int	`json:"isfriend"`
+	Isfamily int	`json:"isfamily"`
 }
 type Packet struct{
-	page int	`json:"page"`
-	pages int	`json:"pages"`
-	perpage int	`json:"perpage"`
-	total string	`json:"total"`
-	photo []Details	`json:"photo"`
+	Page int	`json:"page"`
+	Pages int	`json:"pages"`
+	Perpage int	`json:"perpage"`
+	Total string	`json:"total"`
+	Photo []Details	`json:"photo"`
 } 
 type Message struct{
-	photos Packet	`json:"photos"`
-	stat string	`json:"stat"`
+	Photos Packet	`json:"photos"`
+	Stat string	`json:"stat"`
 }
 func main() {
 
@@ -51,7 +51,10 @@ func main() {
 	if errn != nil {
 		fmt.Println(errn);
 	}
-	arrayofjsondata := m.photos.photo;
-	fmt.Printf("%+v",arrayofjsondata);
+	arrayofjsondata := m.Photos.Photo;
+	//fmt.Printf("%+v",arrayofjsondata);
+	for i,v := range arrayofjsondata {
+		fmt.Printf("arr[%d]-->%+v\n",i,v)	
+	}
    }
 }

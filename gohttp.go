@@ -54,8 +54,7 @@ func main() {
 	arrayofjsondata := m.Photos.Photo;
 	//fmt.Printf("%+v",arrayofjsondata);
 	for i,v := range arrayofjsondata {
-		fmt.Printf("arr[%d]-->%+v\n",i,v)
-		fmt.Println(v.Id);	
+		fmt.Printf("arr[%d] --> %+v\n",i,v);	
 	}
    }
 }
