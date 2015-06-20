@@ -51,7 +51,7 @@ func main() {
 	if errn != nil {
 		fmt.Println(errn);
 	}
-	data := m.Photos.Photo;
-	fmt.Println(data);
+	arrayofjsondata := m.Photos.Photo;
+	fmt.Printf("%+v",arrayofjsondata);
    }
 }
