@@ -49,7 +49,9 @@ type PuppyDetails struct{
 }
 
 func main(){
-	http.HandleFunc("/",root)
+	http.HandleFunc("/fetch",root)
+	http.HandleFunc("/upvote",upvote)
+	http.HandleFunc("/downvote",downvote)
 	fmt.Println("Listening for incoming request")
 	err := http.ListenAndServe(GetPort(),nil)
 	if err!=nil {
@@ -145,4 +147,71 @@ func root(w http.ResponseWriter,r *http.Request){
 	}	
 }
 
+func upvote(w http.ResponseWriter, r *http.Request){
+	usrid := r.URL.Query().Get("id")
+	if len(usrid)==0 {
+		fmt.Println("user id is not recieved")
+		os.Exit(1)	
+	}
+	fmt.Println("This is the id received")
+	//..............Now we need to connect to the db........................
+
+	uri := os.Getenv("MONGOHQ_URL")
+	if uri == "" {
+		fmt.Println("No connection string provided");
+		os.Exit(1)
+	}	
+	
+	sess, err := mgo.Dial(uri)
+	if err != nil {
+		fmt.Println("Cant connect to Mongodb using the given uri");
+		os.Exit(1)	
+	}
+	defer sess.Close()
+
+	sess.SetSafe(&mgo.Safe{})
+
+	//................Now updating the document in collection.......................
+
+	collection := sess.DB("puppypull").C("puppydetails")
+	errn := collection.Update(bson.M{"id":usrid},bson.M{"$inc":bson.M{"upvote":1}})
+	if errn != nil {
+		fmt.Printf("Error while updating for upvote : %v",errn)	
+	}
+
+}
+
+func downvote(w http.ResponseWriter, r *http.Request){
+	usrid := r.URL.Query().Get("id")
+	if len(usrid)==0 {
+		fmt.Println("user id is not recieved")
+		os.Exit(1)	
+	}
+	fmt.Println("This is the id received")
+	//..............Now we need to connect to the db........................
+
+	uri := os.Getenv("MONGOHQ_URL")
+	if uri == "" {
+		fmt.Println("No connection string provided");
+		os.Exit(1)
+	}	
+	
+	sess, err := mgo.Dial(uri)
+	if err != nil {
+		fmt.Println("Cant connect to Mongodb using the given uri");
+		os.Exit(1)	
+	}
+	defer sess.Close()
+
+	sess.SetSafe(&mgo.Safe{})
+
+	//................Now updating the document in collection.......................
+
+	collection := sess.DB("puppypull").C("puppydetails")
+	errn := collection.Update(bson.M{"id":usrid},bson.M{"$inc":bson.M{"downvote":1}})
+	if errn != nil {
+		fmt.Printf("Error while updating for upvote : %v",errn)	
+	}
+
+}
 
