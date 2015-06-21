@@ -9,6 +9,7 @@ import(
 	"io/ioutil"
 	"github.com/unrolled/render"
 	"encoding/json"
+	"math/rand"
 )
 
 type Details struct{
@@ -72,8 +73,22 @@ func GetPort() string{
 
 func root(w http.ResponseWriter,r *http.Request){
 	//..............Sending a get method to flickr api......................
+	
+	//..............get the value in url...............
 
-	response, err := http.Get("https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=c2ef6776bc7946440b01cc9070d55ac0&tags=cute+puppy&per_page=1&format=json&nojsoncallback=1&auth_token=72157654809259522-833770d09d600311&api_sig=164482f059ef2a032b504551e720b66c")
+	usrtag := r.URL.Query().Get("tag")
+	if len(usrtag)==0 {
+		usrtag = "cute+puppy"
+	}
+	
+	//.................creating a random number for page......................
+	rand.Seed(49)	
+	pgno := rand.Intn(7114) 
+	uri := "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=c3e4b4f1288dd22b93d0eb607feac333&tags="+usrtag+"&page="+string(pgno)+"&format=json&nojsoncallback=1"
+
+	fmt.Println("The random generated is ",pgno,"and the uri is ",uri)
+	response, err := http.Get(uri)
+	//response, err := http.Get("https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=6fcd9a3cf8a8a260b36df54274e6b5bc&tags=cute+puppy&page=2&format=json&nojsoncallback=1&auth_token=72157654440984338-11b28d428a9e9b02&api_sig=e434c73b0d14e0790d328d63e9153052")
     	if err != nil {
         	fmt.Printf("%s", err)
         	os.Exit(1)
@@ -93,7 +108,7 @@ func root(w http.ResponseWriter,r *http.Request){
 		}
 		//..........arrayofjsondata holds the data that we need to upload...................
 		arrayofjsondata := m.Photos.Photo;
-		fmt.Println(arrayofjsondata);
+		//fmt.Println(arrayofjsondata);
    	//}
 
 	//..............Now we need to connect to the db........................
@@ -127,8 +142,8 @@ func root(w http.ResponseWriter,r *http.Request){
 
 	//...........................Should get data from the DB................................
 
-	result := PuppyDetails{}
-	errm := collection.Find(bson.M{}).One(&result)
+	result := []PuppyDetails{}
+	errm := collection.Find(bson.M{}).All(&result)
 	if errm != nil {
 		fmt.Printf("Cant get data using Find. The error is : %v",errm)
 		os.Exit(1)	
@@ -136,7 +151,7 @@ func root(w http.ResponseWriter,r *http.Request){
 
 	//............................showing data in console..................................
 
-	fmt.Printf("%+v\n",result)
+	//fmt.Printf("%+v\n",result)
 
 	//............................sending data to the client.............................
 
@@ -153,7 +168,7 @@ func upvote(w http.ResponseWriter, r *http.Request){
 		fmt.Println("user id is not recieved")
 		os.Exit(1)	
 	}
-	fmt.Println("This is the id received")
+	//fmt.Println("This is the id received")
 	//..............Now we need to connect to the db........................
 
 	uri := os.Getenv("MONGOHQ_URL")

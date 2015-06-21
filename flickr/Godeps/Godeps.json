@@ -1,0 +1,15 @@
+{
+	"ImportPath": "github.com/muralimano28/flickr",
+	"GoVersion": "go1.3.3",
+	"Deps": [
+		{
+			"ImportPath": "github.com/unrolled/render",
+			"Rev": "20811297fc3c80743d1aad450c983c6df08ae436"
+		},
+		{
+			"ImportPath": "labix.org/v2/mgo",
+			"Comment": "287",
+			"Rev": "gustavo@niemeyer.net-20140501184651-975yyw9ipld92pji"
+		}
+	]
+}
