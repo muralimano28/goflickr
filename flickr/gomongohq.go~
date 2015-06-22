@@ -148,7 +148,7 @@ func root(w http.ResponseWriter,r *http.Request){
 	//...........................Should get data from the DB................................
 
 	result := []PuppyDetails{}
-	errm := collection.Find(bson.M{}).Sort(bson.M{"-$oid").Limit(100).All(&result)
+	errm := collection.Find(bson.M{}).Sort("-$oid").Limit(100).All(&result)
 	if errm != nil {
 		fmt.Printf("Cant get data using Find. The error is : %v",errm)
 		os.Exit(1)	
