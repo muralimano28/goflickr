@@ -10,6 +10,7 @@ import(
 	"github.com/unrolled/render"
 	"encoding/json"
 	"math/rand"
+	"time"
 )
 
 type Details struct{
@@ -82,11 +83,12 @@ func root(w http.ResponseWriter,r *http.Request){
 	}
 	
 	//.................creating a random number for page......................
-	rand.Seed(49)	
+	rand.Seed(time.Now().UnixNano() / int64(time.Millisecond))	
 	pgno := rand.Intn(7114) 
-	uri := "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=c3e4b4f1288dd22b93d0eb607feac333&tags="+usrtag+"&page="+string(pgno)+"&format=json&nojsoncallback=1"
+	fmt.Println("The page number is",pgno)
+	uri := "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=c3e4b4f1288dd22b93d0eb607feac333&tags="+usrtag+"&page="+string(pgno)+"&per_page=100&format=json&nojsoncallback=1"
 
-	fmt.Println("The random generated is ",pgno,"and the uri is ",uri)
+	//fmt.Println("The random generated is ",pgno,"and the uri is ",uri)
 	response, err := http.Get(uri)
 	//response, err := http.Get("https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=6fcd9a3cf8a8a260b36df54274e6b5bc&tags=cute+puppy&page=2&format=json&nojsoncallback=1&auth_token=72157654440984338-11b28d428a9e9b02&api_sig=e434c73b0d14e0790d328d63e9153052")
     	if err != nil {
@@ -131,19 +133,22 @@ func root(w http.ResponseWriter,r *http.Request){
 	//...........................Inserting document into the collection in DB.................
 
 	collection := sess.DB("puppypull").C("puppydetails")
-	for _,v := range arrayofjsondata {
-		doc := PuppyDetails{Id:v.Id, Owner:v.Owner, Secret:v.Secret, Server:v.Server, Farm:v.Farm, Title:v.Title, Ispublic:v.Ispublic, Isfriend:v.Isfriend, Isfamily:v.Isfamily, Upvote:0, Downvote:0}
-		err := collection.Insert(doc)
-		if err != nil {
-			fmt.Printf("Cant insert into document : %v",err)
-			os.Exit(1)		
-		}		
-	}
 
+	//count,err := collection.Count()
+	//if count==0{
+		for _,v := range arrayofjsondata {
+			doc := PuppyDetails{Id:v.Id, Owner:v.Owner, Secret:v.Secret, Server:v.Server, Farm:v.Farm, Title:v.Title, Ispublic:v.Ispublic, Isfriend:v.Isfriend, Isfamily:v.Isfamily, Upvote:0, Downvote:0}
+			err := collection.Insert(doc)
+			if err != nil {
+				fmt.Printf("Cant insert into document : %v",err)
+				os.Exit(1)		
+			}		
+		}
+	//}
 	//...........................Should get data from the DB................................
 
 	result := []PuppyDetails{}
-	errm := collection.Find(bson.M{}).All(&result)
+	errm := collection.Find(bson.M{}).Sort(bson.M{"-$oid").Limit(100).All(&result)
 	if errm != nil {
 		fmt.Printf("Cant get data using Find. The error is : %v",errm)
 		os.Exit(1)	
