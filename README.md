@@ -1,4 +1,4 @@
-# Go Server
+# Goflickr
 Introduction
 Puppy pull is a simple web application that fetches photos of cute puppies from the internet and displays it on a webpage. The visitors to the page can upvote and downvote an image. They can sort the images according to the most voted. Every image will display the number of votes it has received.Go server helps puppy pull by fetching data from flickr and giving it to Nodejs and then to client for display.
 
