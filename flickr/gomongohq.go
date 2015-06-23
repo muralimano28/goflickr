@@ -11,6 +11,7 @@ import(
 	"encoding/json"
 	"math/rand"
 	"time"
+	"strconv"
 )
 
 type Details struct{
@@ -82,16 +83,25 @@ func root(w http.ResponseWriter,r *http.Request){
 	//..............Setting tag value in flickr uri...............
 
 	usrtag := r.URL.Query().Get("tag")
+	fmt.Println("The user tag is ",usrtag)
+	var seedtime int64
+	var pgno int
 	if len(usrtag)==0 {
 		usrtag = "cute+puppy"
+		seedtime = time.Now().UnixNano() / int64(time.Millisecond)
+		rand.Seed(seedtime)	
+		pgno = rand.Intn(143)
+	}else{
+		pgno = 1
 	}
+
 	
 	//.................creating a random number to fetch random page from flickr......................
 
-	seedtime := time.Now().UnixNano() / int64(time.Millisecond)
-	rand.Seed(seedtime)	
-	pgno := rand.Intn(7114) 
-	uri := "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=c3e4b4f1288dd22b93d0eb607feac333&tags="+usrtag+"&page="+string(pgno)+"&per_page=50&format=json&nojsoncallback=1"
+	pgstring := strconv.Itoa(pgno)
+	fmt.Println("The pgno is ",pgstring) 
+	uri := "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=c3e4b4f1288dd22b93d0eb607feac333&tags="+usrtag+"&page="+pgstring+"&per_page=50&format=json&nojsoncallback=1"
+	fmt.Println(uri)
 
 	//................Getting data from flickr using uri..........................
 
@@ -119,59 +129,77 @@ func root(w http.ResponseWriter,r *http.Request){
 		//..........arrayofjsondata holds the data that we need to upload...................
 
 		arrayofjsondata := m.Photos.Photo;
+		fmt.Println("arrayofjsondata is ",arrayofjsondata)
 
-	//..............Now we need to connect to the db........................
+		//..............Now we need to connect to the db........................
 
-	uri := os.Getenv("MONGOHQ_URL")
-	if uri == "" {
-		fmt.Println("No connection string provided");
-		os.Exit(1)
-	}	
-	
-	sess, err := mgo.Dial(uri)
-	if err != nil {
-		fmt.Println("Cant connect to Mongodb using the given uri");
-		os.Exit(1)	
-	}
-	defer sess.Close()
-
-	sess.SetSafe(&mgo.Safe{})
-
-	//...........................Inserting document into the collection in DB.................
-
-	collection := sess.DB("puppypull").C("puppydetails")
-
-	//...........................If the document count goes more than 1500000 it will not store in database.....................
-	//...........................bcoz am using free db from mongolab....limitation..:-P.........................................
-
-	count,err := collection.Count()
-	if count==1500000{	
-		for _,v := range arrayofjsondata {
-			time := time.Now().UnixNano() / int64(time.Millisecond)
-			doc := PuppyDetails{Id:v.Id, Owner:v.Owner, Secret:v.Secret, Server:v.Server, Farm:v.Farm, Title:v.Title, Ispublic:v.Ispublic, Isfriend:v.Isfriend, Isfamily:v.Isfamily, Upvote:0, Downvote:0, Time: time}
-			err := collection.Insert(doc)
-			if err != nil {
-				fmt.Printf("Cant insert into document : %v",err)
-				os.Exit(1)		
-			}		
+		uri := os.Getenv("MONGOHQ_URL")
+		if uri == "" {
+			fmt.Println("No connection string provided");
+			os.Exit(1)
+		}	
+		
+		sess, err := mgo.Dial(uri)
+		if err != nil {
+			fmt.Println("Cant connect to Mongodb using the given uri");
+			os.Exit(1)	
 		}
-	}
+		defer sess.Close()
+	
+		sess.SetSafe(&mgo.Safe{})
+	
+		//...........................Inserting document into the collection in DB.................
+	
+		collection := sess.DB("puppypull").C("puppydetails")
+	
+		//...........................If the document count goes more than 1500000 it will not store in database.....................
+		//...........................bcoz am using free db from mongolab....limitation..:-P.........................................
 
-	//...........................fetching data from the DB................................
+		//count,err := collection.Count()
+		//if count==1500000{	
+			/*for i,v := range arrayofjsondata {
+				time := time.Now().UnixNano() / int64(time.Millisecond)
+				doc := PuppyDetails{Id:v.Id, Owner:v.Owner, Secret:v.Secret, Server:v.Server, Farm:v.Farm, Title:v.Title, Ispublic:v.Ispublic, Isfriend:v.Isfriend, Isfamily:v.Isfamily, Upvote:0, Downvote:0, Time: time}
+				if i<5 {
+					fmt.Println("i --> v --> ",i,v,doc)
+				}
+				err := collection.Insert(doc)
+				if err != nil {
+					fmt.Printf("Cant insert into document : %v",err)
+					os.Exit(1)		
+				}		
+			}*/
+			for i := 0; i<len(arrayofjsondata); i++ {
+				time := time.Now().UnixNano() / int64(time.Millisecond)
+				doc := PuppyDetails{}
+				fmt.Println("initally the doc is ",doc)
+				doc = PuppyDetails{Id:arrayofjsondata[i].Id, Owner:arrayofjsondata[i].Owner, Secret:arrayofjsondata[i].Secret, Server:arrayofjsondata[i].Server, Farm:arrayofjsondata[i].Farm, Title:arrayofjsondata[i].Title, Ispublic:arrayofjsondata[i].Ispublic, Isfriend:arrayofjsondata[i].Isfriend, Isfamily:arrayofjsondata[i].Isfamily, Upvote:0, Downvote:0, Time: time}
+				if i<5 {
+					fmt.Println("i ",i,"--> ",doc)
+				}
+				err := collection.Insert(doc)
+				if err != nil {
+					fmt.Printf("Cant insert into document : %v",err)
+					os.Exit(1)		
+				}			
+			}
+		//}
 
-	result := []PuppyDetails{}
-	errm := collection.Find(bson.M{}).Sort("-time").Limit(50).All(&result)
-	if errm != nil {
-		fmt.Printf("Cant get data using Find. The error is : %v",errm)
-		os.Exit(1)	
-	}
+		//...........................fetching data from the DB................................
 
-	//............................sending data in JSON format to the client.............................
+		result := []PuppyDetails{}
+		errm := collection.Find(bson.M{}).Sort("-time").Limit(50).All(&result)
+		if errm != nil {
+			fmt.Printf("Cant get data using Find. The error is : %v",errm)
+			os.Exit(1)	
+		}
 
-	ren := render.New(render.Options{
-        	IndentJSON: true,
-    	})
-	ren.JSON(w,http.StatusOK,&result)
+		//............................sending data in JSON format to the client.............................
+	
+		ren := render.New(render.Options{
+	        	IndentJSON: true,
+	    	})
+		ren.JSON(w,http.StatusOK,&result)
 	}	
 }
 
