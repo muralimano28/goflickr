@@ -269,7 +269,7 @@ func downvote(w http.ResponseWriter, r *http.Request){
 	//................Now updating the document in collection.......................
 
 	collection := sess.DB("puppypull").C("puppydetails")
-	errn := collection.Update(bson.M{"id":usrid},bson.M{"$inc":bson.M{"downvote":1}})
+	errn := collection.UpdateAll(bson.M{"id":usrid},bson.M{"$inc":bson.M{"downvote":1}})
 	if errn != nil {
 		fmt.Printf("Error while updating for upvote : %v",errn)	
 	}
