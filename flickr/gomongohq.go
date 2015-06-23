@@ -53,6 +53,9 @@ type PuppyDetails struct{
 }
 
 func main(){
+
+	//.......................... Routing each request...........................
+
 	http.HandleFunc("/fetch",root)
 	http.HandleFunc("/upvote",upvote)
 	http.HandleFunc("/downvote",downvote)
@@ -75,26 +78,24 @@ func GetPort() string{
 }
 
 func root(w http.ResponseWriter,r *http.Request){
-	//..............Sending a get method to flickr api......................
-	
-	//..............get the value in url...............
+
+	//..............Setting tag value in flickr uri...............
 
 	usrtag := r.URL.Query().Get("tag")
 	if len(usrtag)==0 {
 		usrtag = "cute+puppy"
 	}
 	
-	//.................creating a random number for page......................
+	//.................creating a random number to fetch random page from flickr......................
+
 	seedtime := time.Now().UnixNano() / int64(time.Millisecond)
-	fmt.Println("This is the seed time ",seedtime);
 	rand.Seed(seedtime)	
 	pgno := rand.Intn(7114) 
-	fmt.Println("The page number is",pgno)
-	uri := "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=c3e4b4f1288dd22b93d0eb607feac333&tags="+usrtag+"&page="+string(pgno)+"&per_page=100&format=json&nojsoncallback=1"
+	uri := "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=c3e4b4f1288dd22b93d0eb607feac333&tags="+usrtag+"&page="+string(pgno)+"&per_page=50&format=json&nojsoncallback=1"
 
-	//fmt.Println("The random generated is ",pgno,"and the uri is ",uri)
+	//................Getting data from flickr using uri..........................
+
 	response, err := http.Get(uri)
-	//response, err := http.Get("https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=6fcd9a3cf8a8a260b36df54274e6b5bc&tags=cute+puppy&page=2&format=json&nojsoncallback=1&auth_token=72157654440984338-11b28d428a9e9b02&api_sig=e434c73b0d14e0790d328d63e9153052")
     	if err != nil {
         	fmt.Printf("%s", err)
         	os.Exit(1)
@@ -105,17 +106,19 @@ func root(w http.ResponseWriter,r *http.Request){
             		fmt.Printf("%s", err)
             		os.Exit(1)
         	}
+
 		//.....................Unmarshalling the message..............................
+
 		m := Message{}
 		errn := json.Unmarshal([]byte(contents),&m)
 		if errn != nil {
 			fmt.Println(errn);
 			os.Exit(1)
 		}
+
 		//..........arrayofjsondata holds the data that we need to upload...................
+
 		arrayofjsondata := m.Photos.Photo;
-		//fmt.Println(arrayofjsondata);
-   	//}
 
 	//..............Now we need to connect to the db........................
 
@@ -138,8 +141,11 @@ func root(w http.ResponseWriter,r *http.Request){
 
 	collection := sess.DB("puppypull").C("puppydetails")
 
-	//count,err := collection.Count()
-	//if count==0{
+	//...........................If the document count goes more than 1500000 it will not store in database.....................
+	//...........................bcoz am using free db from mongolab....limitation..:-P.........................................
+
+	count,err := collection.Count()
+	if count==1500000{	
 		for _,v := range arrayofjsondata {
 			time := time.Now().UnixNano() / int64(time.Millisecond)
 			doc := PuppyDetails{Id:v.Id, Owner:v.Owner, Secret:v.Secret, Server:v.Server, Farm:v.Farm, Title:v.Title, Ispublic:v.Ispublic, Isfriend:v.Isfriend, Isfamily:v.Isfamily, Upvote:0, Downvote:0, Time: time}
@@ -149,8 +155,9 @@ func root(w http.ResponseWriter,r *http.Request){
 				os.Exit(1)		
 			}		
 		}
-	//}
-	//...........................Should get data from the DB................................
+	}
+
+	//...........................fetching data from the DB................................
 
 	result := []PuppyDetails{}
 	errm := collection.Find(bson.M{}).Sort("-time").Limit(50).All(&result)
@@ -159,11 +166,7 @@ func root(w http.ResponseWriter,r *http.Request){
 		os.Exit(1)	
 	}
 
-	//............................showing data in console..................................
-
-	//fmt.Printf("%+v\n",result)
-
-	//............................sending data to the client.............................
+	//............................sending data in JSON format to the client.............................
 
 	ren := render.New(render.Options{
         	IndentJSON: true,
@@ -173,13 +176,16 @@ func root(w http.ResponseWriter,r *http.Request){
 }
 
 func upvote(w http.ResponseWriter, r *http.Request){
+
+	//..............................getting id from the request uri........................................
+
 	usrid := r.URL.Query().Get("id")
 	if len(usrid)==0 {
 		fmt.Println("user id is not recieved")
 		os.Exit(1)	
 	}
-	//fmt.Println("This is the id received")
-	//..............Now we need to connect to the db........................
+	
+	//..............connecting to the db........................
 
 	uri := os.Getenv("MONGOHQ_URL")
 	if uri == "" {
@@ -203,17 +209,19 @@ func upvote(w http.ResponseWriter, r *http.Request){
 	if errn != nil {
 		fmt.Printf("Error while updating for upvote : %v",errn)	
 	}
-
 }
 
 func downvote(w http.ResponseWriter, r *http.Request){
+
+	//.........................Getting id from the request uri..............................
+
 	usrid := r.URL.Query().Get("id")
 	if len(usrid)==0 {
 		fmt.Println("user id is not recieved")
 		os.Exit(1)	
 	}
-	fmt.Println("This is the id received")
-	//..............Now we need to connect to the db........................
+	
+	//................Connecting to the db........................
 
 	uri := os.Getenv("MONGOHQ_URL")
 	if uri == "" {
