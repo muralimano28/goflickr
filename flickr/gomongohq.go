@@ -49,6 +49,7 @@ type PuppyDetails struct{
 	Isfamily int
 	Upvote int
 	Downvote int
+	Time int64
 }
 
 func main(){
@@ -84,7 +85,9 @@ func root(w http.ResponseWriter,r *http.Request){
 	}
 	
 	//.................creating a random number for page......................
-	rand.Seed(time.Now().UnixNano() / int64(time.Millisecond))	
+	seedtime := time.Now().UnixNano() / int64(time.Millisecond)
+	fmt.Println("This is the seed time ",seedtime);
+	rand.Seed(seedtime)	
 	pgno := rand.Intn(7114) 
 	fmt.Println("The page number is",pgno)
 	uri := "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=c3e4b4f1288dd22b93d0eb607feac333&tags="+usrtag+"&page="+string(pgno)+"&per_page=100&format=json&nojsoncallback=1"
@@ -138,7 +141,8 @@ func root(w http.ResponseWriter,r *http.Request){
 	//count,err := collection.Count()
 	//if count==0{
 		for _,v := range arrayofjsondata {
-			doc := PuppyDetails{Id:v.Id, Owner:v.Owner, Secret:v.Secret, Server:v.Server, Farm:v.Farm, Title:v.Title, Ispublic:v.Ispublic, Isfriend:v.Isfriend, Isfamily:v.Isfamily, Upvote:0, Downvote:0}
+			time := time.Now().UnixNano() / int64(time.Millisecond)
+			doc := PuppyDetails{Id:v.Id, Owner:v.Owner, Secret:v.Secret, Server:v.Server, Farm:v.Farm, Title:v.Title, Ispublic:v.Ispublic, Isfriend:v.Isfriend, Isfamily:v.Isfamily, Upvote:0, Downvote:0, Time: time}
 			err := collection.Insert(doc)
 			if err != nil {
 				fmt.Printf("Cant insert into document : %v",err)
@@ -149,7 +153,7 @@ func root(w http.ResponseWriter,r *http.Request){
 	//...........................Should get data from the DB................................
 
 	result := []PuppyDetails{}
-	errm := collection.Find(bson.M{}).Sort("-$oid").Limit(100).All(&result)
+	errm := collection.Find(bson.M{}).Sort("-time").Limit(50).All(&result)
 	if errm != nil {
 		fmt.Printf("Cant get data using Find. The error is : %v",errm)
 		os.Exit(1)	
