@@ -23,6 +23,7 @@ type Details struct{
 	Ispublic int	`json:"ispublic"`
 	Isfriend int	`json:"isfriend"`
 	Isfamily int	`json:"isfamily"`
+	Time int64	`json:"time"`
 }
 type Packet struct{
 	Page int	`json:"page"`
