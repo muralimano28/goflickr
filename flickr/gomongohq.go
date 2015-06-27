@@ -12,6 +12,7 @@ import(
 	"math/rand"
 	"time"
 	"strconv"
+    "strings"
 )
 
 type Details struct{
@@ -83,10 +84,11 @@ func root(w http.ResponseWriter,r *http.Request){
 	//..............Setting tag value in flickr uri...............
 
 	usrtag := r.URL.Query().Get("tag")
-	fmt.Println("The user tag is ",usrtag)
+    output := strings.Replace(usrtag," ","+",-1)
+	fmt.Println("The user tag is ",output)
 	var seedtime int64
 	var pgno int
-	if len(usrtag)==0 {
+	if len(output)==0 {
 		usrtag = "cute+puppy"
 		seedtime = time.Now().UnixNano() / int64(time.Millisecond)
 		rand.Seed(seedtime)	
@@ -100,7 +102,7 @@ func root(w http.ResponseWriter,r *http.Request){
 
 	pgstring := strconv.Itoa(pgno)
 	fmt.Println("The pgno is ",pgstring) 
-	uri := "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=c3e4b4f1288dd22b93d0eb607feac333&tags="+usrtag+"&page="+pgstring+"&per_page=50&format=json&nojsoncallback=1"
+	uri := "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=c3e4b4f1288dd22b93d0eb607feac333&tags="+output+"&page="+pgstring+"&per_page=50&format=json&nojsoncallback=1"
 	fmt.Println(uri)
 
 	//................Getting data from flickr using uri..........................
