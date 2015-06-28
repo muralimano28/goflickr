@@ -89,7 +89,7 @@ func root(w http.ResponseWriter,r *http.Request){
 	var seedtime int64
 	var pgno int
 	if len(output)==0 {
-		usrtag = "cute+puppy"
+		output = "cute+puppy"
 		seedtime = time.Now().UnixNano() / int64(time.Millisecond)
 		rand.Seed(seedtime)	
 		pgno = rand.Intn(143)
