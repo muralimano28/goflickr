@@ -54,18 +54,42 @@ type PuppyDetails struct{
 	Time int64
 }
 
+type Mgo struct{
+    sess *mgo.Session
+}
+
 func main(){
+    
+    //...........................Open the session of mongo db...................
+    
+    uri := os.Getenv("MONGOHQ_URL")
+		if uri == "" {
+			fmt.Println("No connection string provided");
+			os.Exit(1)
+		}	
+		
+		sess, err := mgo.Dial(uri)
+		if err != nil {
+			fmt.Println("Cant connect to Mongodb using the given uri");
+			os.Exit(1)	
+		}
+		defer sess.Close()
+	
+		sess.SetSafe(&mgo.Safe{})
+    
+    m1 := Mgo{sess}
 
 	//.......................... Routing each request...........................
 
-	http.HandleFunc("/fetch",root)
-	http.HandleFunc("/upvote",upvote)
-	http.HandleFunc("/downvote",downvote)
+	http.HandleFunc("/fetch",m1.root)
+	http.HandleFunc("/upvote",m1.upvote)
+	http.HandleFunc("/downvote",m1.downvote)
 	fmt.Println("Listening for incoming request")
-	err := http.ListenAndServe(GetPort(),nil)
+	err = http.ListenAndServe(GetPort(),nil)
 	if err!=nil {
 		panic(err)	
 	}
+    
 }
 
 //...............................Getting port for Heroku.......................
@@ -79,7 +103,7 @@ func GetPort() string{
 	return ":" + port
 }
 
-func root(w http.ResponseWriter,r *http.Request){
+func (m1 Mgo) root(w http.ResponseWriter,r *http.Request){
 
 	//..............Setting tag value in flickr uri...............
 
@@ -135,7 +159,7 @@ func root(w http.ResponseWriter,r *http.Request){
 
 		//..............Now we need to connect to the db........................
 
-		uri := os.Getenv("MONGOHQ_URL")
+		/* uri := os.Getenv("MONGOHQ_URL")
 		if uri == "" {
 			fmt.Println("No connection string provided");
 			os.Exit(1)
@@ -148,9 +172,11 @@ func root(w http.ResponseWriter,r *http.Request){
 		}
 		defer sess.Close()
 	
-		sess.SetSafe(&mgo.Safe{})
+		sess.SetSafe(&mgo.Safe{}) */
 	
 		//...........................Inserting document into the collection in DB.................
+            
+        sess := m1.sess
 	
 		collection := sess.DB("puppypull").C("puppydetails")
 	
@@ -205,7 +231,7 @@ func root(w http.ResponseWriter,r *http.Request){
 	}	
 }
 
-func upvote(w http.ResponseWriter, r *http.Request){
+func (m1 Mgo) upvote(w http.ResponseWriter, r *http.Request){
 
 	//..............................getting id from the request uri........................................
 
@@ -217,7 +243,8 @@ func upvote(w http.ResponseWriter, r *http.Request){
 	
 	//..............connecting to the db........................
 
-	uri := os.Getenv("MONGOHQ_URL")
+    sess := m1.sess
+	/*uri := os.Getenv("MONGOHQ_URL")
 	if uri == "" {
 		fmt.Println("No connection string provided");
 		os.Exit(1)
@@ -230,7 +257,7 @@ func upvote(w http.ResponseWriter, r *http.Request){
 	}
 	defer sess.Close()
 
-	sess.SetSafe(&mgo.Safe{})
+	sess.SetSafe(&mgo.Safe{}) */
 
 	//................Now updating the document in collection.......................
 
@@ -241,7 +268,7 @@ func upvote(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func downvote(w http.ResponseWriter, r *http.Request){
+func (m1 Mgo) downvote(w http.ResponseWriter, r *http.Request){
 
 	//.........................Getting id from the request uri..............................
 
@@ -253,7 +280,8 @@ func downvote(w http.ResponseWriter, r *http.Request){
 	
 	//................Connecting to the db........................
 
-	uri := os.Getenv("MONGOHQ_URL")
+    sess := m1.sess
+	/*uri := os.Getenv("MONGOHQ_URL")
 	if uri == "" {
 		fmt.Println("No connection string provided");
 		os.Exit(1)
@@ -266,7 +294,7 @@ func downvote(w http.ResponseWriter, r *http.Request){
 	}
 	defer sess.Close()
 
-	sess.SetSafe(&mgo.Safe{})
+	sess.SetSafe(&mgo.Safe{}) */
 
 	//................Now updating the document in collection.......................
 
